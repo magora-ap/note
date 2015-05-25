@@ -1,0 +1,8 @@
+{
+  "name": "notepad",
+  "version": "0.0.1",
+  "author": "Dmitry Kalyuk",
+  "dependencies": {
+    "bootstrap": "~3.3.4"
+  }
+}
