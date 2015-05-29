@@ -21,7 +21,7 @@ function AppStorage(storage) {
 
     this.set = function (obj) {
 
-        obj.id = obj.id.length ? obj.id : this._generateId();
+        obj.id = obj.id && obj.id.length ? obj.id : this._generateId();
 
         var storage = this.getAll();
         storage[obj.id] = obj;

@@ -5,7 +5,55 @@ function Application(options) {
         storage: 'Cookie',
         view: {
             containerId: 'notes',
-            templateId: 'note-template'
+            formContainerId: 'note-form',
+            templateId: 'note-template',
+            errorTemplateId: 'form-error-template',
+            formItemTemplateId: 'form-item-template',
+            formItemInputTemplateId: 'form-item-input-template',
+            formItemTextareaTemplateId: 'form-item-textarea-template'
+        }
+    };
+
+    this._forms = {
+        'note-form': {
+            onsubmit: function (e) {
+                e.preventDefault();
+                if (application._save())
+                    this.reset();
+            },
+            validateCallback: function (element, errors) {
+                this._view.toggleErrors(element, errors);
+            }.bind(this),
+            templateId: 'form-template',
+            fields: [
+                {
+                    element: 'input',
+                    templateId: 'form-input-template',
+                    name: 'title',
+                    placeholder: 'Enter title',
+                    type: 'text',
+                    label: 'Title',
+                    validators: [
+                        {method: 'required', error: 'The field \'Title\' is required'},
+                        {method: 'number', error: 'Only numbers are allowed in field \'Title\''}
+                    ]
+                },
+                {
+                    element: 'textarea',
+                    templateId: 'form-textarea-template',
+                    name: 'content',
+                    label: 'Content',
+                    validators: [
+                        {method: 'required', error: 'The field \'Content\' is required'},
+                        {method: 'number', error: 'Only numbers are allowed in field \'Content\''}
+                    ]
+                },
+                {
+                    element: 'button',
+                    templateId: 'form-button-template',
+                    type: 'submit'
+                }
+            ]
         }
     };
 
@@ -17,14 +65,14 @@ function Application(options) {
     var application = this;
 
     this.init = function () {
-        this._container = document.getElementById(this._options.view.containerId);
-        this._form = document.forms[this._options.formName];
-
         this._view = new View(this._options.view);
         this._storage = new AppStorage(this._options.storage);
 
 
         this._view.afterRender = function () {
+            application._form = document.getElementById('note-form');
+            application._container = document.getElementById(application._options.view.containerId);
+
             var elements = application._container.getElementsByClassName('action-note');
             for (var i = 0; i < elements.length; i++) {
                 elements[i].onclick = function () {
@@ -34,18 +82,11 @@ function Application(options) {
             }
         };
 
-        this._render();
-
-
-        this._form.onsubmit = function (e) {
-            e.preventDefault();
-            application._save();
-            this.reset();
-        }
+        this._render(true);
     };
 
-    this._render = function () {
-        this._view.render(this._storage.getAll());
+    this._render = function (init) {
+        this._view.render(init, this._storage.getAll(), this._forms);
     };
 
     this.edit = function (id) {
@@ -84,6 +125,19 @@ function Application(options) {
 
     this._save = function () {
 
+        var valid = true;
+        for (var i = 0; i < this._form.elements.length; i++) {
+            var element = this._form.elements[i];
+            if (element.validator) {
+                if (!element.validator.test()) {
+                    valid = false;
+                }
+            }
+        }
+
+        if (!valid)
+            return false;
+
         this._storage.set({
             id: this._form.elements['id'].value,
             title: this._form.elements['title'].value,
@@ -92,6 +146,7 @@ function Application(options) {
 
         application._render();
 
+        return true;
     };
 
     if (options !== undefined) {
